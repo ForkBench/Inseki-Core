@@ -1,0 +1,10 @@
+{
+    "name": "*",
+    "isDirectory": true,
+    "children": [
+        {
+            "name": "*.c",
+            "isDirectory": false
+        }
+    ]
+}
