@@ -36,13 +36,13 @@ func (n Node) String(depth ...int) string {
 }
 
 /*
-Convert method to convert a Node to a list of files, canBeOptional is used to include optional files
+NodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
 */
-func (n Node) Convert(canBeOptional bool) []string {
+func (n Node) NodeToString(canBeOptional bool) []string {
 	var files []string
 	for _, child := range n.Children {
 		if child.IsDirectory {
-			for _, file := range child.Convert(canBeOptional) {
+			for _, file := range child.NodeToString(canBeOptional) {
 				if !child.Optional || canBeOptional {
 					files = append(files, fmt.Sprintf("%s/%s", n.Name, file))
 				}
@@ -58,9 +58,9 @@ func (n Node) Convert(canBeOptional bool) []string {
 }
 
 /*
-ReadStructure method to read a JSON file and return a Node
+JSONToNode method to read a JSON file and return a Node
 */
-func ReadStructure(jsonPath string) Node {
+func JSONToNode(jsonPath string) Node {
 	jsonData, err := os.ReadFile(jsonPath)
 	if err != nil {
 		panic(err)
@@ -84,7 +84,7 @@ func ImportStructure(structuresRoot string) []Node {
 	// Read all .json
 	err := ExploreFolder(structuresRoot, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
-			nodes = append(nodes, ReadStructure(path))
+			nodes = append(nodes, JSONToNode(path))
 		}
 		return nil
 	})
@@ -93,4 +93,21 @@ func ImportStructure(structuresRoot string) []Node {
 	}
 
 	return nodes
+}
+
+/*
+ExportStructure method to export a Node to a JSON file
+*/
+func ExportStructure(node Node, path string) {
+	jsonData, err := json.MarshalIndent(node, "", "    ")
+	if err != nil {
+		panic(err)
+	}
+
+	err = os.WriteFile(path,
+		jsonData,
+		0644)
+	if err != nil {
+		panic(err)
+	}
 }

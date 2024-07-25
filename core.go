@@ -6,7 +6,7 @@ func main() {
 	structures := tools.ImportStructure("./structures")
 
 	for _, structure := range structures {
-		files := structure.Convert(false)
+		files := structure.NodeToString(false)
 		for _, file := range files {
 			println(file)
 		}
