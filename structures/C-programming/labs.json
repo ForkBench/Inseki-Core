@@ -1,9 +1,9 @@
 {
-    "name": "*.c",
+    "name": "*",
     "isDirectory": true,
     "children": [
         {
-            "name": "*",
+            "name": "*.c",
             "isDirectory": false
         }
     ]

@@ -14,6 +14,7 @@ type Node struct {
 	IsDirectory bool   `json:"isDirectory"`
 	Optional    bool   `json:"optional,omitempty"`
 	Children    []Node `json:"children,omitempty"`
+	HashValue   uint64 `json:"hash,omitempty"`
 }
 
 /*
@@ -72,19 +73,35 @@ func JSONToNode(jsonPath string) Node {
 		panic(err)
 	}
 
+	rootNode.HashValue = rootNode.Hash()
+
 	return rootNode
 }
 
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(structuresRoot string) []Node {
-	var nodes []Node
+func ImportStructure(structuresRoot string) map[uint64]Node {
+	nodes := make(map[uint64]Node)
 
 	// Read all .json
 	err := ExploreFolder(structuresRoot, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
-			nodes = append(nodes, JSONToNode(path))
+			node := JSONToNode(path)
+
+			// Check if the hash is not in the map, add it
+			if _, ok := nodes[node.Hash()]; !ok {
+				nodes[node.Hash()] = node
+			} else {
+				// If the hash is already in the map, check if the node is equal
+				// If it is equal, then it is a duplicate
+				if nodes[node.Hash()].Equal(node, false) {
+					panic(fmt.Sprintf("Duplicate: %s\n", path))
+				} else {
+					// If it is not equal, then it is a conflict
+					panic(fmt.Sprintf("Conflict: %s\n", path))
+				}
+			}
 		}
 		return nil
 	})
@@ -109,5 +126,61 @@ func ExportStructure(node Node, path string) {
 		0644)
 	if err != nil {
 		panic(err)
+	}
+}
+
+/*
+See if a node is equal to another node (using hash) :
+*/
+func (n Node) Equal(other Node, canBeOptional bool) bool {
+	return n.Hash() == other.Hash() && n.Contains(other) && other.Contains(n)
+}
+
+/*
+See if a node contains another node :
+
+# If all the children of A are in B (where children of B can be optional), then A is in B
+
+A.Contains(B) -> A is in B
+*/
+func (n Node) Contains(other Node) bool {
+
+	if n.Name != other.Name || n.IsDirectory != other.IsDirectory || n.Optional != other.Optional {
+		return false
+	}
+
+	for _, child := range n.Children {
+		found := false
+		for _, otherChild := range other.Children {
+			if child.Equal(otherChild, true) {
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return false
+		}
+	}
+
+	return true
+}
+
+/*
+Hash a node using merkle tree
+*/
+func (n Node) Hash() uint64 {
+	if n.IsDirectory {
+		var hash uint64
+		for _, child := range n.Children {
+			hash += child.Hash()
+		}
+		return hash
+	} else {
+		if len(n.Name) >= 2 {
+			return uint64(n.Name[1]) + uint64(n.Name[len(n.Name)-1])<<len(n.Name)
+		} else {
+			return 0
+		}
 	}
 }
