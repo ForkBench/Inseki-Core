@@ -125,11 +125,11 @@ func JSONToNode(jsonPath string) Node {
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(structuresRoot string) map[uint64]Node {
+func ImportStructure(structuresRoot string, insekiignore []string) map[uint64]Node {
 	nodes := make(map[uint64]Node)
 
 	// Read all .json
-	err := ExploreFolder(structuresRoot, func(path string, info os.FileInfo) error {
+	err := ExploreFolder(structuresRoot, insekiignore, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
 			node := JSONToNode(path)
 
@@ -143,12 +143,15 @@ func ImportStructure(structuresRoot string) map[uint64]Node {
 					panic(fmt.Sprintf("Duplicate: %s\n", path))
 				} else {
 					// If it is not equal, then it is a conflict
+					println(nodes[node.Hash()].String())
+					println(node.String())
 					panic(fmt.Sprintf("Conflict: %s\n", path))
 				}
 			}
 		}
 		return nil
 	})
+
 	if err != nil {
 		panic(err)
 	}
@@ -174,19 +177,31 @@ func ExportStructure(node Node, path string) {
 }
 
 /*
-Extract file and folder name from a node : store all the unique file and folder names in a map
+For a node, if its root isn't "*", then add it to the map and return
+
+If the root is "*", then add all the children to the map
 */
-func (n Node) ExtractNames(extractOptional bool, names map[string]bool) {
-	if !n.Optional || extractOptional {
-		// Exception : doesn't import "*"
-		if n.Name != "*" {
-			names[n.Name] = true
+func (n Node) ExtractNames(extractOptional bool, names map[string][]Node) {
+	if n.Name != "*" {
+		if !n.Optional || extractOptional {
+			names[n.Name] = append(names[n.Name], n)
+		}
+	} else {
+		for _, child := range n.Children {
+			child.ExtractNames(extractOptional, names)
 		}
 	}
+}
 
-	for _, child := range n.Children {
-		child.ExtractNames(extractOptional, names)
+/*
+Extract all the names from a list of nodes
+*/
+func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]Node {
+	names := make(map[string][]Node)
+	for _, node := range nodes {
+		node.ExtractNames(extractOptional, names)
 	}
+	return names
 }
 
 /*
@@ -229,18 +244,18 @@ func (n Node) Contains(other Node) bool {
 /*
 Hash a node using merkle tree
 */
-func (n Node) Hash() uint64 {
+func (n Node) Hash(depth ...int) uint64 {
 	if n.IsDirectory {
 		var hash uint64
 		for _, child := range n.Children {
-			hash += child.Hash()
+			hash += child.Hash(append(depth, 1)...)
 		}
 		return hash
 	} else {
 		if len(n.Name) >= 2 {
-			return uint64(n.Name[1]) + uint64(n.Name[len(n.Name)-1])<<len(n.Name)
+			return uint64(n.Name[1]) + uint64(n.Name[len(n.Name)-1])<<len(depth)
 		} else {
-			return 0
+			return uint64(len(depth))
 		}
 	}
 }

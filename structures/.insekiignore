@@ -1,0 +1,12 @@
+.npm
+.vscode
+.bun
+.cargo
+.gradle
+.local
+.m2
+.rustup
+pkg
+node_modules
+dist
+Library
