@@ -59,6 +59,50 @@ func (n Node) NodeToString(canBeOptional bool) []string {
 }
 
 /*
+StringToNode method to convert a list of files to a Node
+*/
+func StringToNode(files []string) Node {
+	rootNode := Node{
+		Name:        ".",
+		IsDirectory: true,
+	}
+
+	for _, file := range files {
+		path := strings.Split(file, "/")
+		currentNode := &rootNode
+
+		for i, name := range path {
+			if i == len(path)-1 {
+				currentNode.Children = append(currentNode.Children, Node{
+					Name:        name,
+					IsDirectory: false,
+				})
+			} else {
+				found := false
+				for _, child := range currentNode.Children {
+					if child.Name == name {
+						currentNode = &child
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					newNode := Node{
+						Name:        name,
+						IsDirectory: true,
+					}
+					currentNode.Children = append(currentNode.Children, newNode)
+					currentNode = &newNode
+				}
+			}
+		}
+	}
+
+	return rootNode
+}
+
+/*
 JSONToNode method to read a JSON file and return a Node
 */
 func JSONToNode(jsonPath string) Node {
@@ -126,6 +170,22 @@ func ExportStructure(node Node, path string) {
 		0644)
 	if err != nil {
 		panic(err)
+	}
+}
+
+/*
+Extract file and folder name from a node : store all the unique file and folder names in a map
+*/
+func (n Node) ExtractNames(extractOptional bool, names map[string]bool) {
+	if !n.Optional || extractOptional {
+		// Exception : doesn't import "*"
+		if n.Name != "*" {
+			names[n.Name] = true
+		}
+	}
+
+	for _, child := range n.Children {
+		child.ExtractNames(extractOptional, names)
 	}
 }
 
