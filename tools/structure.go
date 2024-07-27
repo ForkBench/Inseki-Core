@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -195,6 +196,12 @@ func (n Node) ExtractNames(extractOptional bool, names map[string][]*Node) {
 	}
 }
 
+func SortNodes(nodes []*Node) {
+	sort.Slice(nodes, func(i, j int) bool {
+		return nodes[i].Contains(*nodes[j])
+	})
+}
+
 /*
 Extract all the names from a list of nodes
 */
@@ -203,6 +210,13 @@ func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]*Nod
 	for _, node := range nodes {
 		node.ExtractNames(extractOptional, names)
 	}
+
+	// For each name, sort the nodes
+	for _, nodes := range names {
+		// Sort the nodes
+		SortNodes(nodes)
+	}
+
 	return names
 }
 
@@ -217,6 +231,7 @@ func StringNodeToAssociation(stringNode map[string][]*Node) []Association {
 			Nodes:   nodes,
 		})
 	}
+
 	return associations
 }
 
