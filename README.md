@@ -81,7 +81,7 @@ Build the project using the following command:
 To run it, execute the following command:
 
 ```
-  ./inseki-Core
+  ./inseki-core
 ```
 
 You'll have to put structures into `~/.inseki` directory to see the results.
@@ -98,6 +98,8 @@ To run the project, execute the following command:
 
 ## 🔭 Future Features <a name="future-features"></a>
 
+- [ ] Add a structure library for common project types
+- [ ] Add go routines for faster scanning
 - [ ] Add advanced filtering options for project discovery
 - [ ] Implement a graphical interface for easier interaction
 
