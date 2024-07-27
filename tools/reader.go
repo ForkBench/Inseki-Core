@@ -54,7 +54,7 @@ func TranslateDir(path string) string {
 	return path
 }
 
-func ExploreFolder(path string, insekiignore []string, callback func(path string, info os.FileInfo) error) error {
+func ExploreFolder(path string, insekiignore []string, callback func(path string, info os.FileInfo) error, numberFilesAnalysed *int) error {
 
 	// Translate the path
 	path = TranslateDir(path)
@@ -69,6 +69,10 @@ func ExploreFolder(path string, insekiignore []string, callback func(path string
 
 			fmt.Println("Error: ", err)
 			return err
+		}
+
+		if !info.IsDir() {
+			*numberFilesAnalysed++
 		}
 
 		// Check if the file or folder name is in the .insekiignore

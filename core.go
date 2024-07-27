@@ -2,6 +2,7 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"os"
 	"sync"
 
@@ -12,7 +13,7 @@ import (
 var configJson string
 
 func process() {
-	// Read the config file
+	// ----------------------------- Read the configuration -----------------------------
 	config := tools.ReadEmbedConfigFile(configJson)
 
 	// Check if the folder exists
@@ -20,7 +21,10 @@ func process() {
 
 	insekiignore := tools.ReadInsekiIgnore(config)
 
-	structures := tools.ImportStructure(config, insekiignore)
+	// ----------------------------- Read the structures -----------------------------
+	numberStructuresAnalysed := 0
+
+	structures := tools.ImportStructure(config, insekiignore, &numberStructuresAnalysed)
 
 	if len(structures) == 0 {
 		println("No structures found")
@@ -32,7 +36,14 @@ func process() {
 
 	stack := &tools.Stack{}
 
-	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, stack))
+	fmt.Printf("Number of structures analysed: %d\n", numberStructuresAnalysed)
+
+	// ----------------------------- Explore the folder -----------------------------
+	numberFilesAnalysed := 0
+
+	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, stack), &numberFilesAnalysed)
+
+	fmt.Printf("Number of files analysed: %d\n", numberFilesAnalysed)
 
 	ch := make(chan tools.Target)
 	var wg sync.WaitGroup
@@ -44,15 +55,10 @@ func process() {
 		go func(value tools.Target, ch chan tools.Target) {
 			defer wg.Done()
 
-			target := tools.Target{
-				Filepath:    value.Filepath,
-				Association: value.Association,
-			}
-
 			// TODO: Do something with the file
 
 			// Add the path to the stack
-			ch <- target
+			ch <- value
 		}(value, ch)
 	}
 
@@ -60,6 +66,10 @@ func process() {
 		wg.Wait()
 		close(ch)
 	}()
+
+	// for value := range ch {
+	// 	println(value.String())
+	// }
 }
 
 func main() {

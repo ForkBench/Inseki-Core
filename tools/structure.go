@@ -161,7 +161,7 @@ func JSONToStructure(jsonPath string) Structure {
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(config Config, insekiignore []string) map[uint64]Structure {
+func ImportStructure(config Config, insekiignore []string, numberFilesAnalysed *int) map[uint64]Structure {
 	nodes := make(map[uint64]Structure)
 
 	path := TranslateDir(config.StructurePath)
@@ -188,7 +188,7 @@ func ImportStructure(config Config, insekiignore []string) map[uint64]Structure 
 			}
 		}
 		return nil
-	})
+	}, numberFilesAnalysed)
 
 	if err != nil {
 		panic(err)
@@ -218,22 +218,21 @@ func ExportStructure(structure Structure, path string) {
 For a node, if its root isn't "*", then add it to the map and return
 */
 func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structure) {
-	if s.Root.Name != "*" {
-		if _, ok := names[s.Root.Name]; !ok {
-			names[s.Root.Name] = []Structure{s}
+	addToNames := func(name string, s Structure) {
+		if _, ok := names[name]; !ok {
+			names[name] = []Structure{s}
 		} else {
-			names[s.Root.Name] = append(names[s.Root.Name], s)
+			names[name] = append(names[name], s)
 		}
+	}
+
+	if s.Root.Name != "*" {
+		addToNames(s.Root.Name, s)
 	}
 
 	for _, child := range s.Root.Children {
-		if _, ok := names[child.Name]; !ok {
-			names[child.Name] = []Structure{s}
-		} else {
-			names[child.Name] = append(names[child.Name], s)
-		}
+		addToNames(child.Name, s)
 	}
-
 }
 
 func SortNodes(structures *[]Structure) {
