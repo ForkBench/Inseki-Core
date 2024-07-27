@@ -27,8 +27,10 @@ func main() {
 	}
 
 	patterns := tools.ExtractNames(structures, false)
+	associations := tools.StringNodeToAssociation(patterns)
 
-	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(patterns, func(filepath string, nodes []*tools.Node) {
+	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, func(filepath string, nodes []*tools.Node) {
 		println(filepath)
 	}))
+
 }

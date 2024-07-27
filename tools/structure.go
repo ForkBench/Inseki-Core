@@ -207,6 +207,20 @@ func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]*Nod
 }
 
 /*
+String-Node map to Association
+*/
+func StringNodeToAssociation(stringNode map[string][]*Node) []Association {
+	var associations []Association
+	for pattern, nodes := range stringNode {
+		associations = append(associations, Association{
+			Pattern: pattern,
+			Nodes:   nodes,
+		})
+	}
+	return associations
+}
+
+/*
 See if a node is equal to another node (using hash) :
 */
 func (n Node) Equal(other Node, canBeOptional bool) bool {
