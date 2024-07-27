@@ -1,11 +1,30 @@
 package main
 
-import "inseki-core/tools"
+import (
+	_ "embed"
+	"os"
+
+	"inseki-core/tools"
+)
+
+//go:embed config.json
+var configJson string
 
 func main() {
-	insekiignore := tools.ReadInsekiIgnore()
+	// Read the config file
+	config := tools.ReadEmbedConfigFile(configJson)
 
-	structures := tools.ImportStructure("./structures", insekiignore)
+	// Check if the folder exists
+	tools.CheckIfConfigFolderExists(config)
+
+	insekiignore := tools.ReadInsekiIgnore(config)
+
+	structures := tools.ImportStructure(config, insekiignore)
+
+	if len(structures) == 0 {
+		println("No structures found")
+		os.Exit(0)
+	}
 
 	patterns := tools.ExtractNames(structures, false)
 

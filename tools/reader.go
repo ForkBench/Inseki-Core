@@ -8,14 +8,19 @@ import (
 	"strings"
 )
 
-// Todo: Config file
-const insekiIgnorePath = "./structures/.insekiignore"
-
 // Read the .insekiignore file
-func ReadInsekiIgnore() []string {
+func ReadInsekiIgnore(config Config) []string {
+	insekiIgnorePath := filepath.Join(config.InsekiPath, ".insekiignore")
+
 	// Read the .insekiignore file
 	insekiIgnore, err := os.ReadFile(insekiIgnorePath)
 	if err != nil {
+		// If the file does not exist, return an empty slice
+		if os.IsNotExist(err) {
+			return []string{}
+		}
+
+		// If there is an error, panic
 		panic(err)
 	}
 
@@ -66,8 +71,7 @@ func FilterWithPatternMap(patterns map[string][]Node, callback func(filepath str
 	}
 }
 
-func ExploreFolder(path string, insekiignore []string, callback func(path string, info os.FileInfo) error) error {
-
+func TranslateDir(path string) string {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 
@@ -79,6 +83,14 @@ func ExploreFolder(path string, insekiignore []string, callback func(path string
 		// "/something/~/something/"
 		path = filepath.Join(dir, path[2:])
 	}
+
+	return path
+}
+
+func ExploreFolder(path string, insekiignore []string, callback func(path string, info os.FileInfo) error) error {
+
+	// Translate the path
+	path = TranslateDir(path)
 
 	return filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

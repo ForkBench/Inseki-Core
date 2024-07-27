@@ -125,11 +125,13 @@ func JSONToNode(jsonPath string) Node {
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(structuresRoot string, insekiignore []string) map[uint64]Node {
+func ImportStructure(config Config, insekiignore []string) map[uint64]Node {
 	nodes := make(map[uint64]Node)
 
+	path := TranslateDir(config.StructurePath)
+
 	// Read all .json
-	err := ExploreFolder(structuresRoot, insekiignore, func(path string, info os.FileInfo) error {
+	err := ExploreFolder(path, insekiignore, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
 			node := JSONToNode(path)
 
