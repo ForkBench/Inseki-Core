@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"os"
+	"sync"
 
 	"inseki-core/tools"
 )
@@ -29,8 +30,33 @@ func main() {
 	patterns := tools.ExtractNames(structures, false)
 	associations := tools.StringNodeToAssociation(patterns)
 
-	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, func(filepath string, association tools.Association) {
-		println(filepath)
-	}))
+	stack := &tools.Stack{}
 
+	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, stack))
+
+	ch := make(chan string)
+	var wg sync.WaitGroup
+
+	for !stack.IsEmpty() {
+		value := stack.Pop()
+
+		wg.Add(1)
+		go func(value tools.StackValue, ch chan string) {
+			defer wg.Done()
+
+			// TODO: Do something with the file
+
+			// Add the path to the stack
+			ch <- value.Filepath
+		}(value, ch)
+	}
+
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+
+	for path := range ch {
+		println(path)
+	}
 }

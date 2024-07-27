@@ -43,3 +43,9 @@ func (s *Stack) Len() int {
 func (s *Stack) Clear() {
 	s.Values = []StackValue{}
 }
+
+func (s *Stack) Print() {
+	for _, value := range s.Values {
+		println(value.Filepath)
+	}
+}
