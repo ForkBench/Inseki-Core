@@ -18,6 +18,7 @@
   - [💻 Getting Started ](#-getting-started-)
     - [Prerequisites](#prerequisites)
     - [Setup](#setup)
+    - [Build](#build)
     - [Development](#development)
   - [🔭 Future Features ](#-future-features-)
   - [📝 License ](#-license-)
@@ -66,16 +67,24 @@ Clone this repository to your desired folder:
 
 ```
   cd my-folder
-  git@github.com:ForkBench/Inseki-Core.git
+  git clone git@github.com:ForkBench/Inseki-Core.git
 ```
 
-<!-- ### Build
+### Build
 
 Build the project using the following command:
 
 ```
   go build
-``` -->
+```
+
+To run it, execute the following command:
+
+```
+  ./inseki-Core
+```
+
+You'll have to put structures into `~/.inseki` directory to see the results.
 
 ### Development
 
