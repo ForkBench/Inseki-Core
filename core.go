@@ -28,7 +28,7 @@ func main() {
 
 	patterns := tools.ExtractNames(structures, false)
 
-	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(patterns, func(filepath string, nodes []tools.Node) {
+	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(patterns, func(filepath string, nodes []*tools.Node) {
 		println(filepath)
 	}))
 }

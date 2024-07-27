@@ -183,10 +183,10 @@ For a node, if its root isn't "*", then add it to the map and return
 
 If the root is "*", then add all the children to the map
 */
-func (n Node) ExtractNames(extractOptional bool, names map[string][]Node) {
+func (n Node) ExtractNames(extractOptional bool, names map[string][]*Node) {
 	if n.Name != "*" {
 		if !n.Optional || extractOptional {
-			names[n.Name] = append(names[n.Name], n)
+			names[n.Name] = append(names[n.Name], &n)
 		}
 	} else {
 		for _, child := range n.Children {
@@ -198,8 +198,8 @@ func (n Node) ExtractNames(extractOptional bool, names map[string][]Node) {
 /*
 Extract all the names from a list of nodes
 */
-func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]Node {
-	names := make(map[string][]Node)
+func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]*Node {
+	names := make(map[string][]*Node)
 	for _, node := range nodes {
 		node.ExtractNames(extractOptional, names)
 	}
