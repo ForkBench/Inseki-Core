@@ -11,7 +11,7 @@ import (
 //go:embed config.json
 var configJson string
 
-func main() {
+func process() {
 	// Read the config file
 	config := tools.ReadEmbedConfigFile(configJson)
 
@@ -34,20 +34,25 @@ func main() {
 
 	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, stack))
 
-	ch := make(chan string)
+	ch := make(chan tools.Target)
 	var wg sync.WaitGroup
 
 	for !stack.IsEmpty() {
 		value := stack.Pop()
 
 		wg.Add(1)
-		go func(value tools.StackValue, ch chan string) {
+		go func(value tools.Target, ch chan tools.Target) {
 			defer wg.Done()
+
+			target := tools.Target{
+				Filepath:    value.Filepath,
+				Association: value.Association,
+			}
 
 			// TODO: Do something with the file
 
 			// Add the path to the stack
-			ch <- value.Filepath
+			ch <- target
 		}(value, ch)
 	}
 
@@ -55,8 +60,8 @@ func main() {
 		wg.Wait()
 		close(ch)
 	}()
+}
 
-	for path := range ch {
-		println(path)
-	}
+func main() {
+	process()
 }

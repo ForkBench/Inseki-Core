@@ -1,21 +1,16 @@
 package tools
 
-type StackValue struct {
-	Filepath    string
-	Association Association
-}
-
 type Stack struct {
-	Values []StackValue
+	Values []Target
 }
 
-func (s *Stack) Push(value StackValue) {
+func (s *Stack) Push(value Target) {
 	s.Values = append(s.Values, value)
 }
 
-func (s *Stack) Pop() StackValue {
+func (s *Stack) Pop() Target {
 	if len(s.Values) == 0 {
-		return StackValue{}
+		return Target{}
 	}
 
 	value := s.Values[len(s.Values)-1]
@@ -24,9 +19,9 @@ func (s *Stack) Pop() StackValue {
 	return value
 }
 
-func (s *Stack) Peek() StackValue {
+func (s *Stack) Peek() Target {
 	if len(s.Values) == 0 {
-		return StackValue{}
+		return Target{}
 	}
 
 	return s.Values[len(s.Values)-1]
@@ -41,7 +36,7 @@ func (s *Stack) Len() int {
 }
 
 func (s *Stack) Clear() {
-	s.Values = []StackValue{}
+	s.Values = []Target{}
 }
 
 func (s *Stack) Print() {

@@ -1,13 +1,35 @@
 package tools
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 )
 
 type Association struct {
-	Pattern string
-	Nodes   []*Node
+	Pattern    string
+	Structures []Structure
+}
+
+type Target struct {
+	Filepath    string
+	Association Association
+}
+
+func (t Target) String() string {
+	str := fmt.Sprintf("Path: %s, Structures: [", t.Filepath)
+
+	for i, structure := range t.Association.Structures {
+		str += structure.Name
+
+		if i < len(t.Association.Structures)-1 {
+			str += ", "
+		}
+	}
+
+	str += "]"
+
+	return str
 }
 
 // This is a function that we can use with exploreFolder to filter files and folders
@@ -27,7 +49,7 @@ func FilterWithPatternMap(patterns *[]Association, stack *Stack) func(path strin
 			if match, _ := filepath.Match(association.Pattern, filepath.Base(path)); match {
 
 				// Add the path to the stack
-				stack.Push(StackValue{
+				stack.Push(Target{
 					Filepath:    path,
 					Association: association,
 				})

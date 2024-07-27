@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,6 +17,12 @@ type Node struct {
 	Optional    bool   `json:"optional,omitempty"`
 	Children    []Node `json:"children,omitempty"`
 	HashValue   uint64 `json:"hash,omitempty"`
+}
+
+type Structure struct {
+	Root Node `json:"root"`
+	Hash uint64
+	Name string
 }
 
 /*
@@ -34,6 +41,24 @@ func (n Node) String(depth ...int) string {
 		return fmt.Sprintf("%sDirectory: %s (%s)\n%s", indent, n.Name, strconv.FormatBool(n.Optional), str)
 	} else {
 		return fmt.Sprintf("%sFile: %s (%s)\n", indent, n.Name, strconv.FormatBool(n.Optional))
+	}
+}
+
+/*
+String method to represent a Structure as a string
+*/
+func (s Structure) String() string {
+	return s.Root.String()
+}
+
+/*
+NodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
+*/
+func (n Node) NodeToStructure() Structure {
+	return Structure{
+		Root: n,
+		Hash: n.Hash(),
+		Name: "Undefined",
 	}
 }
 
@@ -60,9 +85,16 @@ func (n Node) NodeToString(canBeOptional bool) []string {
 }
 
 /*
+StructureToString method to convert a Structure to a list of files, canBeOptional is used to include optional files
+*/
+func (s Structure) StructureToString(canBeOptional bool) []string {
+	return s.Root.NodeToString(canBeOptional)
+}
+
+/*
 StringToNode method to convert a list of files to a Node
 */
-func StringToNode(files []string) Node {
+func StringToStructure(files []string) Structure {
 	rootNode := Node{
 		Name:        ".",
 		IsDirectory: true,
@@ -100,13 +132,13 @@ func StringToNode(files []string) Node {
 		}
 	}
 
-	return rootNode
+	return rootNode.NodeToStructure()
 }
 
 /*
 JSONToNode method to read a JSON file and return a Node
 */
-func JSONToNode(jsonPath string) Node {
+func JSONToStructure(jsonPath string) Structure {
 	jsonData, err := os.ReadFile(jsonPath)
 	if err != nil {
 		panic(err)
@@ -120,34 +152,37 @@ func JSONToNode(jsonPath string) Node {
 
 	rootNode.HashValue = rootNode.Hash()
 
-	return rootNode
+	structure := rootNode.NodeToStructure()
+	structure.Name = filepath.Base(jsonPath)
+
+	return structure
 }
 
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(config Config, insekiignore []string) map[uint64]Node {
-	nodes := make(map[uint64]Node)
+func ImportStructure(config Config, insekiignore []string) map[uint64]Structure {
+	nodes := make(map[uint64]Structure)
 
 	path := TranslateDir(config.StructurePath)
 
 	// Read all .json
 	err := ExploreFolder(path, insekiignore, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
-			node := JSONToNode(path)
+			structure := JSONToStructure(path)
 
 			// Check if the hash is not in the map, add it
-			if _, ok := nodes[node.Hash()]; !ok {
-				nodes[node.Hash()] = node
+			if _, ok := nodes[structure.Hash]; !ok {
+				nodes[structure.Hash] = structure
 			} else {
 				// If the hash is already in the map, check if the node is equal
 				// If it is equal, then it is a duplicate
-				if nodes[node.Hash()].Equal(node, false) {
+				if nodes[structure.Hash].Equal(structure, false) {
 					panic(fmt.Sprintf("Duplicate: %s\n", path))
 				} else {
 					// If it is not equal, then it is a conflict
-					println(nodes[node.Hash()].String())
-					println(node.String())
+					println(nodes[structure.Hash].String())
+					println(structure.String())
 					panic(fmt.Sprintf("Conflict: %s\n", path))
 				}
 			}
@@ -165,8 +200,8 @@ func ImportStructure(config Config, insekiignore []string) map[uint64]Node {
 /*
 ExportStructure method to export a Node to a JSON file
 */
-func ExportStructure(node Node, path string) {
-	jsonData, err := json.MarshalIndent(node, "", "    ")
+func ExportStructure(structure Structure, path string) {
+	jsonData, err := json.MarshalIndent(structure.Root, "", "    ")
 	if err != nil {
 		panic(err)
 	}
@@ -181,40 +216,45 @@ func ExportStructure(node Node, path string) {
 
 /*
 For a node, if its root isn't "*", then add it to the map and return
-
-If the root is "*", then add all the children to the map
 */
-func (n Node) ExtractNames(extractOptional bool, names map[string][]*Node) {
-	if n.Name != "*" {
-		if !n.Optional || extractOptional {
-			names[n.Name] = append(names[n.Name], &n)
-		}
-	} else {
-		for _, child := range n.Children {
-			child.ExtractNames(extractOptional, names)
+func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structure) {
+	if s.Root.Name != "*" {
+		if _, ok := names[s.Root.Name]; !ok {
+			names[s.Root.Name] = []Structure{s}
+		} else {
+			names[s.Root.Name] = append(names[s.Root.Name], s)
 		}
 	}
+
+	for _, child := range s.Root.Children {
+		if _, ok := names[child.Name]; !ok {
+			names[child.Name] = []Structure{s}
+		} else {
+			names[child.Name] = append(names[child.Name], s)
+		}
+	}
+
 }
 
-func SortNodes(nodes []*Node) {
-	sort.Slice(nodes, func(i, j int) bool {
-		return nodes[i].Contains(*nodes[j])
+func SortNodes(structures *[]Structure) {
+	sort.Slice(*structures, func(i, j int) bool {
+		return (*structures)[i].Contains((*structures)[j])
 	})
 }
 
 /*
 Extract all the names from a list of nodes
 */
-func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]*Node {
-	names := make(map[string][]*Node)
-	for _, node := range nodes {
-		node.ExtractNames(extractOptional, names)
+func ExtractNames(nodes map[uint64]Structure, extractOptional bool) map[string][]Structure {
+	names := make(map[string][]Structure)
+	for _, structure := range nodes {
+		structure.ExtractNames(extractOptional, names)
 	}
 
 	// For each name, sort the nodes
 	for _, nodes := range names {
 		// Sort the nodes
-		SortNodes(nodes)
+		SortNodes(&nodes)
 	}
 
 	return names
@@ -223,12 +263,12 @@ func ExtractNames(nodes map[uint64]Node, extractOptional bool) map[string][]*Nod
 /*
 String-Node map to Association
 */
-func StringNodeToAssociation(stringNode map[string][]*Node) []Association {
+func StringNodeToAssociation(stringNode map[string][]Structure) []Association {
 	var associations []Association
 	for pattern, nodes := range stringNode {
 		associations = append(associations, Association{
-			Pattern: pattern,
-			Nodes:   nodes,
+			Pattern:    pattern,
+			Structures: nodes,
 		})
 	}
 
@@ -240,6 +280,13 @@ See if a node is equal to another node (using hash) :
 */
 func (n Node) Equal(other Node, canBeOptional bool) bool {
 	return n.Hash() == other.Hash() && n.Contains(other) && other.Contains(n)
+}
+
+/*
+See if a structure is equal to another structure (using hash) :
+*/
+func (s Structure) Equal(other Structure, canBeOptional bool) bool {
+	return s.Hash == other.Hash && s.Contains(other) && other.Contains(s)
 }
 
 /*
@@ -270,6 +317,13 @@ func (n Node) Contains(other Node) bool {
 	}
 
 	return true
+}
+
+/*
+See if a structure contains another structure using Contains
+*/
+func (s Structure) Contains(other Structure) bool {
+	return s.Root.Contains(other.Root)
 }
 
 /*
