@@ -11,7 +11,7 @@ type Association struct {
 }
 
 // This is a function that we can use with exploreFolder to filter files and folders
-func FilterWithPatternMap(patterns *[]Association, callback func(filepath string, nodes []*Node)) func(path string, info os.FileInfo) error {
+func FilterWithPatternMap(patterns *[]Association, callback func(filepath string, nodes []*Node) bool) func(path string, info os.FileInfo) error {
 	return func(path string, info os.FileInfo) error {
 
 		// Pattern could be for example :
@@ -22,13 +22,15 @@ func FilterWithPatternMap(patterns *[]Association, callback func(filepath string
 
 		// TODO: Add order
 
-		// If it is a file, check if the file is in the patterns
 		for _, association := range *patterns {
 			// If the path matches the pattern
 			if match, _ := filepath.Match(association.Pattern, filepath.Base(path)); match {
 
 				// Call the callback
-				callback(path, association.Nodes)
+				if callback(path, association.Nodes) {
+					// If the callback returns true, we don't need to go deeper, an association has been found
+					return filepath.SkipDir
+				}
 
 				// If it's a directory, we don't need to go deeper
 				if info.IsDir() {
