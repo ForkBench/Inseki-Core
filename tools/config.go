@@ -2,7 +2,7 @@ package tools
 
 import (
 	"encoding/json"
-	"fmt"
+	"log"
 	"os"
 )
 
@@ -28,7 +28,7 @@ func ReadEmbedConfigFile(configJson string) (error, Config) {
 func CheckIfConfigFolderExists(config Config) error {
 	// Check if the folder InsekiPath exists
 	if _, err := os.Stat(config.InsekiPath); os.IsNotExist(err) {
-		fmt.Println("The folder does not exist")
+		log.Println("The folder does not exist")
 
 		// Create the folder
 		err := os.Mkdir(config.InsekiPath, 0755)
@@ -36,12 +36,12 @@ func CheckIfConfigFolderExists(config Config) error {
 			return err
 		}
 
-		fmt.Printf("Folder %s created\n", config.InsekiPath)
+		log.Printf("Folder %s created\n", config.InsekiPath)
 	}
 
 	// Check if the folder StructurePath exists
 	if _, err := os.Stat(config.StructurePath); os.IsNotExist(err) {
-		fmt.Println("The folder does not exist")
+		log.Println("The folder does not exist")
 
 		// Create the folder
 		err := os.Mkdir(config.StructurePath, 0755)
@@ -49,7 +49,7 @@ func CheckIfConfigFolderExists(config Config) error {
 			return err
 		}
 
-		fmt.Printf("Folder %s created\n", config.StructurePath)
+		log.Printf("Folder %s created\n", config.StructurePath)
 	}
 
 	return nil

@@ -39,7 +39,7 @@ func Process(path string, config Config, insekiIgnore []string) (error, []Respon
 		return err, nil
 	}
 
-	fmt.Printf("Number of files analysed: %d\n", numberFilesAnalysed)
+	log.Printf("Number of files analysed: %d\n", numberFilesAnalysed)
 
 	ch := make(chan Response)
 	var wg sync.WaitGroup
