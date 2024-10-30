@@ -240,7 +240,8 @@ func (n Node) Matches(root string) bool {
 			// For each folder / files in the directory
 			entries, err := os.ReadDir(root)
 			if err != nil {
-				panic(err)
+				// Needed a folder here, it is a file, so we can skip
+				continue
 			}
 
 			hasAtLeastOneMatch := false
@@ -485,4 +486,14 @@ func GoUp(path string, n uint8) string {
 		path = filepath.Dir(path)
 	}
 	return path
+}
+
+func isDirectory(path string) (bool, error) {
+	// Obtenir les informations sur le fichier
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err // Retourne une erreur si le chemin est invalide
+	}
+	// Vérifie si c'est un dossier
+	return info.IsDir(), nil
 }

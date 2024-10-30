@@ -41,7 +41,7 @@ func process() {
 	// ----------------------------- Explore the folder -----------------------------
 	numberFilesAnalysed := 0
 
-	err := tools.ExploreFolder("/Users/fork/Documents/Dev/Inseki-Core",
+	err := tools.ExploreFolder("~/Documents/",
 		insekiIgnore,
 		tools.FilterWithPatternMap(&associations, stack),
 		&numberFilesAnalysed)
