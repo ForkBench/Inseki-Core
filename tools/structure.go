@@ -411,15 +411,6 @@ func (s Structure) GetDepths(filename string) []uint8 {
 	return depths
 }
 
-func (s Structure) MatchesWithDepth(path string, depth uint8) bool {
-
-	// Check if the whole structure is in the path
-	// We need to go back to the root
-	root := GoUp(path, depth)
-
-	return s.Root.Matches(root)
-}
-
 // Matches : Check if a Structure matches a file
 func (s Structure) Matches(path string) bool {
 	/*
@@ -462,7 +453,9 @@ func (s Structure) Matches(path string) bool {
 	depths := s.GetDepths(filepath.Base(path))
 
 	for _, depth := range depths {
-		if s.MatchesWithDepth(path, depth) {
+		root := GoUp(path, depth)
+
+		if s.Root.Matches(root) {
 			return true
 		}
 	}
