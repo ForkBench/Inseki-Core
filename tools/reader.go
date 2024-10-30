@@ -9,7 +9,7 @@ import (
 )
 
 // ReadInsekiIgnore Read the .insekiignore file
-func ReadInsekiIgnore(config Config) []string {
+func ReadInsekiIgnore(config Config) (error, []string) {
 	insekiIgnorePath := filepath.Join(config.InsekiPath, ".insekiignore")
 
 	// Read the .insekiignore file
@@ -17,11 +17,11 @@ func ReadInsekiIgnore(config Config) []string {
 	if err != nil {
 		// If the file does not exist, return an empty slice
 		if os.IsNotExist(err) {
-			return []string{}
+			return nil, []string{}
 		}
 
-		// If there is an error, panic
-		panic(err)
+		// If there is an error, return it
+		return err, nil
 	}
 
 	// Split the file by line
@@ -35,7 +35,7 @@ func ReadInsekiIgnore(config Config) []string {
 		}
 	}
 
-	return result
+	return nil, result
 }
 
 // TranslateDir Translate a dir name to an absolute path (if there is ~)

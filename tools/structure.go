@@ -2,6 +2,7 @@ package tools
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -54,16 +55,16 @@ func (s Structure) String() string {
 /*
 JSONToStructure method to read a JSON file and return a Structure
 */
-func JSONToStructure(jsonPath string) Structure {
+func JSONToStructure(jsonPath string) (error, Structure) {
 	jsonData, err := os.ReadFile(jsonPath)
 	if err != nil {
-		panic(err)
+		return err, Structure{}
 	}
 
 	var rootNode Node
 	err = json.Unmarshal(jsonData, &rootNode)
 	if err != nil {
-		panic(err)
+		return err, Structure{}
 	}
 
 	rootNode.HashValue = rootNode.Hash()
@@ -71,13 +72,13 @@ func JSONToStructure(jsonPath string) Structure {
 	structure := rootNode.NodeToStructure()
 	structure.Name = filepath.Base(jsonPath)
 
-	return structure
+	return nil, structure
 }
 
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *int) map[uint64]Structure {
+func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *int) (error, map[uint64]Structure) {
 	nodes := make(map[uint64]Structure)
 
 	path := TranslateDir(config.StructurePath)
@@ -85,7 +86,10 @@ func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *
 	// Read all .json
 	err := ExploreFolder(path, insekiIgnore, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
-			structure := JSONToStructure(path)
+			err, structure := JSONToStructure(path)
+			if err != nil {
+				return err
+			}
 
 			// Check if the hash is not in the map, add it
 			if _, ok := nodes[structure.Hash]; !ok {
@@ -94,12 +98,10 @@ func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *
 				// If the hash is already in the map, check if the node is equal
 				// If it is equal, then it is a duplicate
 				if nodes[structure.Hash].Equal(structure, false) {
-					panic(fmt.Sprintf("Duplicate: %s\n", path))
+					return errors.New(fmt.Sprintf("Duplicate: %s\n", path))
 				} else {
 					// If it is not equal, then it is a conflict
-					println(nodes[structure.Hash].String())
-					println(structure.String())
-					panic(fmt.Sprintf("Conflict: %s\n", path))
+					return errors.New(fmt.Sprintf("Conflict: %s\n", path))
 				}
 			}
 		}
@@ -107,27 +109,29 @@ func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *
 	}, numberFilesAnalysed)
 
 	if err != nil {
-		panic(err)
+		return err, nil
 	}
 
-	return nodes
+	return nil, nodes
 }
 
 /*
 ExportStructure method to export a Node to a JSON file
 */
-func ExportStructure(structure Structure, path string) {
+func ExportStructure(structure Structure, path string) error {
 	jsonData, err := json.MarshalIndent(structure.Root, "", "    ")
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	err = os.WriteFile(path,
 		jsonData,
 		0644)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 }
 
 func SortNodes(structures *[]Structure) {
