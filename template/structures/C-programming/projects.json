@@ -1,0 +1,28 @@
+{
+    "name": "*",
+    "isDirectory": true,
+    "children": [
+        {
+            "name": "src",
+            "isDirectory": true,
+            "children": [
+                {
+                    "name": "*.c",
+                    "isDirectory": false,
+                    "optional": false
+                }
+            ]
+        },
+        {
+            "name": "lib",
+            "isDirectory": true,
+            "children": [
+                {
+                    "name": "*.h",
+                    "isDirectory": false,
+                    "optional": false
+                }
+            ]
+        }
+    ]
+}

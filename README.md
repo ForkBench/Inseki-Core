@@ -20,6 +20,7 @@
     - [Setup](#setup)
     - [Build](#build)
     - [Development](#development)
+    - [Example](#example)
   - [🔭 Future Features ](#-future-features-)
   - [📝 License ](#-license-)
 
@@ -93,6 +94,69 @@ To run the project, execute the following command:
 ```
   go run .
 ```
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+### Example
+
+A config :
+
+File located at : `~/.inseki/.insekiignore` to avoid some folders.
+
+```gitignore
+node_modules
+.bun
+.local
+.git
+.idea
+.vscode
+pkg
+libraries
+```
+
+File located at : `~/.inseki/structures/C-programming/projects.json` to define some C projects.
+
+```json
+{
+    "name": "*",
+    "isDirectory": true,
+    "children": [
+        {
+            "name": "src",
+            "isDirectory": true,
+            "children": [
+                {
+                    "name": "*.c",
+                    "isDirectory": false
+                }
+            ]
+        },
+        {
+            "name": "lib",
+            "isDirectory": true,
+            "children": [
+                {
+                    "name": "*.h",
+                    "isDirectory": false
+                }
+            ]
+        }
+    ]
+}
+```
+
+Example of output : 
+
+```bash
+$ go run .
+Number of structures analysed: 1
+Number of files analysed: 13736
+Path: .../Dogu/frontend/src, Structures: [projects.json]
+Path: .../Noru/frontend/src, Structures: [projects.json]
+Path: .../courses/S2/Système/tp3/src, Structures: [projects.json]
+...
+```
+
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
