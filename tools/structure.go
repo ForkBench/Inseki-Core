@@ -230,22 +230,37 @@ func (n Node) Contains(other Node) bool {
 }
 
 // Matches : Check if a Structure matches a file with a specific depth
-func (n Node) Matches(path string) bool {
-	base := filepath.Base(path)
-
-	// If the name matches
-	if !n.Optional {
-		if matched, _ := filepath.Match(n.Name, base); !matched {
-			return false
-		}
-	}
+func (n Node) Matches(root string) bool {
+	base := filepath.Base(root)
 
 	// If it is a directory, we need to check the children
 	if n.IsDirectory {
+		// For each sub node
 		for _, child := range n.Children {
-			if !child.Matches(path) {
+			// For each folder / files in the directory
+			entries, err := os.ReadDir(root)
+			if err != nil {
+				panic(err)
+			}
+
+			hasAtLeastOneMatch := false
+
+			for _, entry := range entries {
+				// Check if the name matches
+				if child.Matches(filepath.Join(root, entry.Name())) {
+					hasAtLeastOneMatch = true
+					break
+				}
+			}
+
+			if !hasAtLeastOneMatch && !child.Optional {
 				return false
 			}
+		}
+	} else {
+		// If the name matches
+		if matched, _ := filepath.Match(n.Name, base); !matched && !n.Optional {
+			return false
 		}
 	}
 
@@ -254,13 +269,16 @@ func (n Node) Matches(path string) bool {
 
 func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
 
+	base := filepath.Base(filename)
+
 	for _, child := range n.Children {
-		if !child.IsDirectory {
-			// Check if the node name is the same as the filename (matches, because it could be *.c)
-			if matched, _ := filepath.Match(child.Name, filename); matched {
-				*depths = append(*depths, uint8(depth))
-			}
-		} else {
+
+		// Check if the node name is the same as the filename (matches, because it could be *.c)
+		if matched, _ := filepath.Match(child.Name, base); matched {
+			*depths = append(*depths, uint8(depth))
+		}
+
+		if child.IsDirectory {
 			child.GetDepths(filename, depths, depth+1)
 		}
 	}
@@ -387,7 +405,7 @@ func (s Structure) Contains(other Structure) bool {
 func (s Structure) GetDepths(filename string) []uint8 {
 	depths := make([]uint8, 0)
 
-	s.Root.GetDepths(filename, &depths, 0)
+	s.Root.GetDepths(filename, &depths, 1)
 
 	return depths
 }
