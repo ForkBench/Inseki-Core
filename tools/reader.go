@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// Read the .insekiignore file
+// ReadInsekiIgnore Read the .insekiignore file
 func ReadInsekiIgnore(config Config) []string {
 	insekiIgnorePath := filepath.Join(config.InsekiPath, ".insekiignore")
 
@@ -38,6 +38,7 @@ func ReadInsekiIgnore(config Config) []string {
 	return result
 }
 
+// TranslateDir Translate a dir name to an absolute path (if there is ~)
 func TranslateDir(path string) string {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
@@ -54,7 +55,8 @@ func TranslateDir(path string) string {
 	return path
 }
 
-func ExploreFolder(path string, insekiignore []string, callback func(path string, info os.FileInfo) error, numberFilesAnalysed *int) error {
+// ExploreFolder Analyze for structures
+func ExploreFolder(path string, insekiIgnore []string, callback func(path string, info os.FileInfo) error, numberFilesAnalysed *int) error {
 
 	// Translate the path
 	path = TranslateDir(path)
@@ -75,8 +77,8 @@ func ExploreFolder(path string, insekiignore []string, callback func(path string
 			*numberFilesAnalysed++
 		}
 
-		// Check if the file or folder name is in the .insekiignore
-		for _, ignore := range insekiignore {
+		// Check if the file or folder name is in the .insekiIgnore
+		for _, ignore := range insekiIgnore {
 			if filepath.Base(path) == ignore {
 				if info.IsDir() {
 					return filepath.SkipDir

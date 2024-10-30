@@ -19,16 +19,16 @@ func process() {
 	// Check if the folder exists
 	tools.CheckIfConfigFolderExists(config)
 
-	insekiignore := tools.ReadInsekiIgnore(config)
+	insekiIgnore := tools.ReadInsekiIgnore(config)
 
 	// ----------------------------- Read the structures -----------------------------
 	numberStructuresAnalysed := 0
 
-	structures := tools.ImportStructure(config, insekiignore, &numberStructuresAnalysed)
+	structures := tools.ImportStructure(config, insekiIgnore, &numberStructuresAnalysed)
 
 	if len(structures) == 0 {
 		println("No structures found")
-		os.Exit(0)
+		os.Exit(-1)
 	}
 
 	patterns := tools.ExtractNames(structures, false)
@@ -41,7 +41,13 @@ func process() {
 	// ----------------------------- Explore the folder -----------------------------
 	numberFilesAnalysed := 0
 
-	tools.ExploreFolder("~/Documents/", insekiignore, tools.FilterWithPatternMap(&associations, stack), &numberFilesAnalysed)
+	err := tools.ExploreFolder("~/Documents/",
+		insekiIgnore,
+		tools.FilterWithPatternMap(&associations, stack),
+		&numberFilesAnalysed)
+	if err != nil {
+		return
+	}
 
 	fmt.Printf("Number of files analysed: %d\n", numberFilesAnalysed)
 
@@ -67,9 +73,9 @@ func process() {
 		close(ch)
 	}()
 
-	// for value := range ch {
-	// 	println(value.String())
-	// }
+	for value := range ch {
+		println(value.String())
+	}
 }
 
 func main() {

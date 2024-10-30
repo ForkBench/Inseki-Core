@@ -32,7 +32,7 @@ func (t Target) String() string {
 	return str
 }
 
-// This is a function that we can use with exploreFolder to filter files and folders
+// FilterWithPatternMap : This is a function that we can use with exploreFolder to filter files and folders
 func FilterWithPatternMap(patterns *[]Association, stack *Stack) func(path string, info os.FileInfo) error {
 	return func(path string, info os.FileInfo) error {
 

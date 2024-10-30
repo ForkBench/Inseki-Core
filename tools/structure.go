@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-// Structure to represent a file system node
+// Node Structure to represent a file system node
 type Node struct {
 	Name        string `json:"name"`
 	IsDirectory bool   `json:"isDirectory"`
@@ -52,7 +52,7 @@ func (s Structure) String() string {
 }
 
 /*
-NodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
+NodeToStructure method to convert a Node to a list of files, canBeOptional is used to include optional files
 */
 func (n Node) NodeToStructure() Structure {
 	return Structure{
@@ -92,7 +92,7 @@ func (s Structure) StructureToString(canBeOptional bool) []string {
 }
 
 /*
-StringToNode method to convert a list of files to a Node
+StringToStructure method to convert a list of files to a Structure
 */
 func StringToStructure(files []string) Structure {
 	rootNode := Node{
@@ -136,7 +136,7 @@ func StringToStructure(files []string) Structure {
 }
 
 /*
-JSONToNode method to read a JSON file and return a Node
+JSONToStructure method to read a JSON file and return a Structure
 */
 func JSONToStructure(jsonPath string) Structure {
 	jsonData, err := os.ReadFile(jsonPath)
@@ -161,13 +161,13 @@ func JSONToStructure(jsonPath string) Structure {
 /*
 ImportStructure method to import all structures from a folder
 */
-func ImportStructure(config Config, insekiignore []string, numberFilesAnalysed *int) map[uint64]Structure {
+func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *int) map[uint64]Structure {
 	nodes := make(map[uint64]Structure)
 
 	path := TranslateDir(config.StructurePath)
 
 	// Read all .json
-	err := ExploreFolder(path, insekiignore, func(path string, info os.FileInfo) error {
+	err := ExploreFolder(path, insekiIgnore, func(path string, info os.FileInfo) error {
 		if strings.HasSuffix(path, ".json") {
 			structure := JSONToStructure(path)
 
@@ -215,6 +215,7 @@ func ExportStructure(structure Structure, path string) {
 }
 
 /*
+ExtractNames
 For a node, if its root isn't "*", then add it to the map and return
 */
 func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structure) {
@@ -242,6 +243,7 @@ func SortNodes(structures *[]Structure) {
 }
 
 /*
+ExtractNames
 Extract all the names from a list of nodes
 */
 func ExtractNames(nodes map[uint64]Structure, extractOptional bool) map[string][]Structure {
@@ -260,6 +262,7 @@ func ExtractNames(nodes map[uint64]Structure, extractOptional bool) map[string][
 }
 
 /*
+StringNodeToAssociation
 String-Node map to Association
 */
 func StringNodeToAssociation(stringNode map[string][]Structure) []Association {
@@ -275,6 +278,7 @@ func StringNodeToAssociation(stringNode map[string][]Structure) []Association {
 }
 
 /*
+Equal
 See if a node is equal to another node (using hash) :
 */
 func (n Node) Equal(other Node, canBeOptional bool) bool {
@@ -282,6 +286,7 @@ func (n Node) Equal(other Node, canBeOptional bool) bool {
 }
 
 /*
+Equal
 See if a structure is equal to another structure (using hash) :
 */
 func (s Structure) Equal(other Structure, canBeOptional bool) bool {
@@ -289,6 +294,7 @@ func (s Structure) Equal(other Structure, canBeOptional bool) bool {
 }
 
 /*
+Contains
 See if a node contains another node :
 
 # If all the children of A are in B (where children of B can be optional), then A is in B
@@ -319,6 +325,7 @@ func (n Node) Contains(other Node) bool {
 }
 
 /*
+Contains
 See if a structure contains another structure using Contains
 */
 func (s Structure) Contains(other Structure) bool {
