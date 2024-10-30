@@ -16,6 +16,15 @@ type Target struct {
 	Association Association
 }
 
+type Response struct {
+	Filepath  string
+	Structure Structure
+}
+
+func (r Response) String() string {
+	return fmt.Sprintf("Filepath: %s, Structure: %s", r.Filepath, r.Structure.Name)
+}
+
 func (t Target) String() string {
 	str := fmt.Sprintf("Path: %s, Structures: [", t.Filepath)
 

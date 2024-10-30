@@ -332,6 +332,110 @@ func (s Structure) Contains(other Structure) bool {
 	return s.Root.Contains(other.Root)
 }
 
+func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
+
+	for _, child := range n.Children {
+		if !child.IsDirectory {
+			// Check if the node name is the same as the filename (matches, because it could be *.c)
+			if matched, _ := filepath.Match(child.Name, filename); matched {
+				*depths = append(*depths, uint8(depth))
+			}
+		} else {
+			child.GetDepths(filename, depths, depth+1)
+		}
+	}
+}
+
+func (s Structure) GetDepths(filename string) []uint8 {
+	depths := make([]uint8, 0)
+
+	s.Root.GetDepths(filename, &depths, 0)
+
+	return depths
+}
+
+// Matches : Check if a Structure matches a file with a specific depth
+func (n Node) Matches(path string) bool {
+	base := filepath.Base(path)
+
+	// If the name matches
+	if !n.Optional {
+		if matched, _ := filepath.Match(n.Name, base); !matched {
+			return false
+		}
+	}
+
+	// If it is a directory, we need to check the children
+	if n.IsDirectory {
+		for _, child := range n.Children {
+			if !child.Matches(path) {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (s Structure) MatchesWithDepth(path string, depth uint8) bool {
+
+	// Check if the whole structure is in the path
+	// We need to go back to the root
+	root := GoUp(path, depth)
+
+	return s.Root.Matches(root)
+}
+
+// Matches : Check if a Structure matches a file
+func (s Structure) Matches(path string) bool {
+	/*
+		The idea is the following :
+
+		We have a Structure, and a match (for example, ~/home/dev/main.c)
+
+		We need to check if **all** folders and files that are non-optional in the structure are contained around this file.
+
+		1. First, we need to determine where is the detected file/folder in the structure (which depth)
+
+		Ex : {
+			README
+			src {
+				main.c
+			}
+		}
+
+		-> main.c is at depth 1 (we need one "../" to go back to the root)
+
+		2. Second, we need to go to the possible root folder
+		3. See if the structure matches from the root
+
+		/!\ There could be multiple depth :
+
+		{
+			README
+			src {
+				main.c
+			}
+			main.c
+		}
+
+		-> main.c is at two different depths
+	*/
+
+	path = filepath.Clean(path)
+
+	// Get the depth of the file
+	depths := s.GetDepths(filepath.Base(path))
+
+	for _, depth := range depths {
+		if s.MatchesWithDepth(path, depth) {
+			return true
+		}
+	}
+
+	return false
+}
+
 /*
 Hash a node using merkle tree
 */
@@ -349,4 +453,13 @@ func (n Node) Hash(depth ...int) uint64 {
 			return uint64(len(depth))
 		}
 	}
+}
+
+// ----------------------------- Useful -----------------------------
+// GoUp : Go up in the path
+func GoUp(path string, n uint8) string {
+	for i := 0; i < int(n); i++ {
+		path = filepath.Dir(path)
+	}
+	return path
 }

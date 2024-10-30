@@ -51,20 +51,25 @@ func process() {
 
 	fmt.Printf("Number of files analysed: %d\n", numberFilesAnalysed)
 
-	ch := make(chan tools.Target)
+	ch := make(chan tools.Response)
 	var wg sync.WaitGroup
 
 	for !stack.IsEmpty() {
 		value := stack.Pop()
 
 		wg.Add(1)
-		go func(value tools.Target, ch chan tools.Target) {
+		go func(value tools.Target, ch chan tools.Response) {
 			defer wg.Done()
 
-			// TODO: Do something with the file
-
-			// Add the path to the stack
-			ch <- value
+			// For each structure, check if the file is a match
+			for _, structure := range value.Association.Structures {
+				if structure.Matches(value.Filepath) {
+					ch <- tools.Response{
+						Filepath:  value.Filepath,
+						Structure: structure,
+					}
+				}
+			}
 		}(value, ch)
 	}
 
