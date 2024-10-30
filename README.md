@@ -167,8 +167,11 @@ Filepath: .../courses/S1/C/TP-Temp/TP1 - Outils/Part2/exemple.c, Structure: lab.
 
 - [x] Add a structure library for common project types
 - [x] Add go routines for faster scanning
+- [x] Add a way to ignore some folders
 - [ ] Add advanced filtering options for project discovery
 - [ ] Implement a graphical interface for easier interaction
+- [ ] Remove multiple scan of files (if a project is composed with n files, it will scan and validate n times)
+- [ ] Test more the project
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
