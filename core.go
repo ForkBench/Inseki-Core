@@ -6,7 +6,7 @@ import (
 	"os"
 	"sync"
 
-	"inseki-core/tools"
+	"github.com/ForkBench/Inseki-Core/tools"
 )
 
 //go:embed config.json
