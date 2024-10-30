@@ -52,90 +52,6 @@ func (s Structure) String() string {
 }
 
 /*
-NodeToStructure method to convert a Node to a list of files, canBeOptional is used to include optional files
-*/
-func (n Node) NodeToStructure() Structure {
-	return Structure{
-		Root: n,
-		Hash: n.Hash(),
-		Name: "Undefined",
-	}
-}
-
-/*
-NodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
-*/
-func (n Node) NodeToString(canBeOptional bool) []string {
-	var files []string
-	for _, child := range n.Children {
-		if child.IsDirectory {
-			for _, file := range child.NodeToString(canBeOptional) {
-				if !child.Optional || canBeOptional {
-					files = append(files, fmt.Sprintf("%s/%s", n.Name, file))
-				}
-			}
-		} else {
-			if !child.Optional || canBeOptional {
-				files = append(files, fmt.Sprintf("%s/%s", n.Name, child.Name))
-			}
-		}
-	}
-
-	return files
-}
-
-/*
-StructureToString method to convert a Structure to a list of files, canBeOptional is used to include optional files
-*/
-func (s Structure) StructureToString(canBeOptional bool) []string {
-	return s.Root.NodeToString(canBeOptional)
-}
-
-/*
-StringToStructure method to convert a list of files to a Structure
-*/
-func StringToStructure(files []string) Structure {
-	rootNode := Node{
-		Name:        ".",
-		IsDirectory: true,
-	}
-
-	for _, file := range files {
-		path := strings.Split(file, "/")
-		currentNode := &rootNode
-
-		for i, name := range path {
-			if i == len(path)-1 {
-				currentNode.Children = append(currentNode.Children, Node{
-					Name:        name,
-					IsDirectory: false,
-				})
-			} else {
-				found := false
-				for _, child := range currentNode.Children {
-					if child.Name == name {
-						currentNode = &child
-						found = true
-						break
-					}
-				}
-
-				if !found {
-					newNode := Node{
-						Name:        name,
-						IsDirectory: true,
-					}
-					currentNode.Children = append(currentNode.Children, newNode)
-					currentNode = &newNode
-				}
-			}
-		}
-	}
-
-	return rootNode.NodeToStructure()
-}
-
-/*
 JSONToStructure method to read a JSON file and return a Structure
 */
 func JSONToStructure(jsonPath string) Structure {
@@ -214,28 +130,6 @@ func ExportStructure(structure Structure, path string) {
 	}
 }
 
-/*
-ExtractNames
-For a node, if its root isn't "*", then add it to the map and return
-*/
-func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structure) {
-	addToNames := func(name string, s Structure) {
-		if _, ok := names[name]; !ok {
-			names[name] = []Structure{s}
-		} else {
-			names[name] = append(names[name], s)
-		}
-	}
-
-	if s.Root.Name != "*" {
-		addToNames(s.Root.Name, s)
-	}
-
-	for _, child := range s.Root.Children {
-		addToNames(child.Name, s)
-	}
-}
-
 func SortNodes(structures *[]Structure) {
 	sort.Slice(*structures, func(i, j int) bool {
 		return (*structures)[i].Contains((*structures)[j])
@@ -261,20 +155,39 @@ func ExtractNames(nodes map[uint64]Structure, extractOptional bool) map[string][
 	return names
 }
 
+// ----------------------------- Node -----------------------------
+
 /*
-StringNodeToAssociation
-String-Node map to Association
+NodeToStructure method to convert a Node to a list of files, canBeOptional is used to include optional files
 */
-func StringNodeToAssociation(stringNode map[string][]Structure) []Association {
-	var associations []Association
-	for pattern, nodes := range stringNode {
-		associations = append(associations, Association{
-			Pattern:    pattern,
-			Structures: nodes,
-		})
+func (n Node) NodeToStructure() Structure {
+	return Structure{
+		Root: n,
+		Hash: n.Hash(),
+		Name: "Undefined",
+	}
+}
+
+/*
+NodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
+*/
+func (n Node) NodeToString(canBeOptional bool) []string {
+	var files []string
+	for _, child := range n.Children {
+		if child.IsDirectory {
+			for _, file := range child.NodeToString(canBeOptional) {
+				if !child.Optional || canBeOptional {
+					files = append(files, fmt.Sprintf("%s/%s", n.Name, file))
+				}
+			}
+		} else {
+			if !child.Optional || canBeOptional {
+				files = append(files, fmt.Sprintf("%s/%s", n.Name, child.Name))
+			}
+		}
 	}
 
-	return associations
+	return files
 }
 
 /*
@@ -283,14 +196,6 @@ See if a node is equal to another node (using hash) :
 */
 func (n Node) Equal(other Node, canBeOptional bool) bool {
 	return n.Hash() == other.Hash() && n.Contains(other) && other.Contains(n)
-}
-
-/*
-Equal
-See if a structure is equal to another structure (using hash) :
-*/
-func (s Structure) Equal(other Structure, canBeOptional bool) bool {
-	return s.Hash == other.Hash && s.Contains(other) && other.Contains(s)
 }
 
 /*
@@ -324,36 +229,6 @@ func (n Node) Contains(other Node) bool {
 	return true
 }
 
-/*
-Contains
-See if a structure contains another structure using Contains
-*/
-func (s Structure) Contains(other Structure) bool {
-	return s.Root.Contains(other.Root)
-}
-
-func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
-
-	for _, child := range n.Children {
-		if !child.IsDirectory {
-			// Check if the node name is the same as the filename (matches, because it could be *.c)
-			if matched, _ := filepath.Match(child.Name, filename); matched {
-				*depths = append(*depths, uint8(depth))
-			}
-		} else {
-			child.GetDepths(filename, depths, depth+1)
-		}
-	}
-}
-
-func (s Structure) GetDepths(filename string) []uint8 {
-	depths := make([]uint8, 0)
-
-	s.Root.GetDepths(filename, &depths, 0)
-
-	return depths
-}
-
 // Matches : Check if a Structure matches a file with a specific depth
 func (n Node) Matches(path string) bool {
 	base := filepath.Base(path)
@@ -375,6 +250,146 @@ func (n Node) Matches(path string) bool {
 	}
 
 	return true
+}
+
+func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
+
+	for _, child := range n.Children {
+		if !child.IsDirectory {
+			// Check if the node name is the same as the filename (matches, because it could be *.c)
+			if matched, _ := filepath.Match(child.Name, filename); matched {
+				*depths = append(*depths, uint8(depth))
+			}
+		} else {
+			child.GetDepths(filename, depths, depth+1)
+		}
+	}
+}
+
+/*
+Hash a node using merkle tree
+*/
+func (n Node) Hash(depth ...int) uint64 {
+	if n.IsDirectory {
+		var hash uint64
+		for _, child := range n.Children {
+			hash += child.Hash(append(depth, 1)...)
+		}
+		return hash
+	} else {
+		if len(n.Name) >= 2 {
+			return uint64(n.Name[1]) + uint64(n.Name[len(n.Name)-1])<<len(depth)
+		} else {
+			return uint64(len(depth))
+		}
+	}
+}
+
+// ----------------------------- Structure -----------------------------
+
+/*
+ExtractNames
+For a node, if its root isn't "*", then add it to the map and return
+*/
+func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structure) {
+	addToNames := func(name string, s Structure) {
+		if _, ok := names[name]; !ok {
+			names[name] = []Structure{s}
+		} else {
+			names[name] = append(names[name], s)
+		}
+	}
+
+	if s.Root.Name != "*" {
+		addToNames(s.Root.Name, s)
+	}
+
+	for _, child := range s.Root.Children {
+		addToNames(child.Name, s)
+	}
+}
+
+/*
+StructureToString method to convert a Structure to a list of files, canBeOptional is used to include optional files
+*/
+func (s Structure) StructureToString(canBeOptional bool) []string {
+	return s.Root.NodeToString(canBeOptional)
+}
+
+/*
+StringToStructure method to convert a list of files to a Structure
+*/
+func StringToStructure(files []string) Structure {
+	rootNode := Node{
+		Name:        ".",
+		IsDirectory: true,
+	}
+
+	for _, file := range files {
+		path := strings.Split(file, "/")
+		currentNode := &rootNode
+
+		for i, name := range path {
+			if i == len(path)-1 {
+				currentNode.Children = append(currentNode.Children, Node{
+					Name:        name,
+					IsDirectory: false,
+				})
+			} else {
+				found := false
+				for _, child := range currentNode.Children {
+					if child.Name == name {
+						currentNode = &child
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					newNode := Node{
+						Name:        name,
+						IsDirectory: true,
+					}
+					currentNode.Children = append(currentNode.Children, newNode)
+					currentNode = &newNode
+				}
+			}
+		}
+	}
+
+	return rootNode.NodeToStructure()
+}
+
+/*
+StringNodeToAssociation
+String-Node map to Association
+*/
+func StringNodeToAssociation(stringNode map[string][]Structure) []Association {
+	var associations []Association
+	for pattern, nodes := range stringNode {
+		associations = append(associations, Association{
+			Pattern:    pattern,
+			Structures: nodes,
+		})
+	}
+
+	return associations
+}
+
+/*
+Contains
+See if a structure contains another structure using Contains
+*/
+func (s Structure) Contains(other Structure) bool {
+	return s.Root.Contains(other.Root)
+}
+
+func (s Structure) GetDepths(filename string) []uint8 {
+	depths := make([]uint8, 0)
+
+	s.Root.GetDepths(filename, &depths, 0)
+
+	return depths
 }
 
 func (s Structure) MatchesWithDepth(path string, depth uint8) bool {
@@ -437,25 +452,15 @@ func (s Structure) Matches(path string) bool {
 }
 
 /*
-Hash a node using merkle tree
+Equal
+See if a structure is equal to another structure (using hash) :
 */
-func (n Node) Hash(depth ...int) uint64 {
-	if n.IsDirectory {
-		var hash uint64
-		for _, child := range n.Children {
-			hash += child.Hash(append(depth, 1)...)
-		}
-		return hash
-	} else {
-		if len(n.Name) >= 2 {
-			return uint64(n.Name[1]) + uint64(n.Name[len(n.Name)-1])<<len(depth)
-		} else {
-			return uint64(len(depth))
-		}
-	}
+func (s Structure) Equal(other Structure, canBeOptional bool) bool {
+	return s.Hash == other.Hash && s.Contains(other) && other.Contains(s)
 }
 
 // ----------------------------- Useful -----------------------------
+
 // GoUp : Go up in the path
 func GoUp(path string, n uint8) string {
 	for i := 0; i < int(n); i++ {
