@@ -21,14 +21,16 @@
     - [Build](#build)
     - [Development](#development)
     - [Example](#example)
-  - [🔭 Future Features ](#-future-features-)
+  - [🔭 Future and Current Features ](#-future-features-)
   - [📝 License ](#-license-)
 
 # 📖 Inseki <a name="about-project"></a>
 
 **Inseki** is an Open-Source tool designed for discovering and analyzing project structures within a disk. It scans directories and represents the structure of each project in JSON format.
 
-👷‍♂️ It is currently under development and is not yet ready for production use.
+👷‍ ~~It is currently under development and is not yet ready for production use.~~
+
+This project is now working ! You can use it to scan your disk and see the results.
 
 ## 🛠 Built With <a name="built-with"></a>
 
@@ -149,21 +151,22 @@ Example of output :
 
 ```bash
 $ go run .
-Number of structures analysed: 1
-Number of files analysed: 13736
-Path: .../Dogu/frontend/src, Structures: [projects.json]
-Path: .../Noru/frontend/src, Structures: [projects.json]
-Path: .../courses/S2/Système/tp3/src, Structures: [projects.json]
+Number of structures analysed: 3
+Number of files analysed: 13739
+Filepath: .../courses/S1/C/TP-Temp/TP1 - Outils/Part2/teZZt.h, Structure: lab.json
+Filepath: .../revisions-c/Exercice/Tri insertion/main.h, Structure: lab.json
+Filepath: .../revisions-c/Exercice/Tri insertion/main.c, Structure: lab.json
+Filepath: .../courses/S1/C/TP-Temp/TP1 - Outils/Part2/exemple.c, Structure: lab.json
 ...
 ```
 
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-## 🔭 Future Features <a name="future-features"></a>
+## 🔭 Future and Current Features <a name="future-features"></a>
 
-- [ ] Add a structure library for common project types
-- [ ] Add go routines for faster scanning
+- [x] Add a structure library for common project types
+- [x] Add go routines for faster scanning
 - [ ] Add advanced filtering options for project discovery
 - [ ] Implement a graphical interface for easier interaction
 
