@@ -199,6 +199,7 @@ Equal
 See if a node is equal to another node (using hash) :
 */
 func (n Node) Equal(other Node, canBeOptional bool) bool {
+	// TODO: Check canBeOptional
 	return n.Hash() == other.Hash() && n.Contains(other) && other.Contains(n)
 }
 
@@ -212,64 +213,78 @@ A.Contains(B) -> A is in B
 */
 func (n Node) Contains(other Node) bool {
 
-	if n.Name != other.Name || n.IsDirectory != other.IsDirectory || n.Optional != other.Optional {
+	// If the name is different, return false
+	if n.Name != other.Name {
 		return false
 	}
 
-	for _, child := range n.Children {
-		found := false
-		for _, otherChild := range other.Children {
-			if child.Equal(otherChild, true) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return false
-		}
-	}
-
-	return true
-}
-
-// Matches : Check if a Structure matches a file with a specific depth
-func (n Node) Matches(root string) bool {
-	base := filepath.Base(root)
-
-	// If it is a directory, we need to check the children
+	// If the node is a directory
 	if n.IsDirectory {
-		// For each sub node
+		// For each child
 		for _, child := range n.Children {
-			// For each folder / files in the directory
-			entries, err := os.ReadDir(root)
-			if err != nil {
-				// Needed a folder here, it is a file, so we can skip
-				continue
-			}
-
-			hasAtLeastOneMatch := false
-
-			for _, entry := range entries {
-				// Check if the name matches
-				if child.Matches(filepath.Join(root, entry.Name())) {
-					hasAtLeastOneMatch = true
+			// Check if the child is in the other node
+			found := false
+			for _, otherChild := range other.Children {
+				if child.Contains(otherChild) {
+					found = true
 					break
 				}
 			}
 
-			if !hasAtLeastOneMatch && !child.Optional {
+			// If the child is not found and it is not optional, return false
+			if !found && !child.Optional {
 				return false
 			}
-		}
-	} else {
-		// If the name matches
-		if matched, _ := filepath.Match(n.Name, base); !matched && !n.Optional {
-			return false
 		}
 	}
 
 	return true
+
+}
+
+// Matches : Check if a Structure matches a file with a specific depth
+func (n Node) Matches(root string) bool {
+	// Has to match from the root
+
+	// If the current node is a file
+	if !n.IsDirectory {
+		// Check if the file exists with os.Glob
+		files, _ := filepath.Glob(filepath.Join(root, n.Name))
+		return len(files) > 0
+	}
+
+	// If the current node is a directory
+	// Check if the root is the same as the name
+	if matched, _ := filepath.Match(n.Name, filepath.Base(root)); matched {
+		// Check if the children match (all non optional children need to be present)
+		hasAllChildren := true
+
+		for _, child := range n.Children {
+			// If the child is optional, skip
+			if child.Optional {
+				continue
+			}
+
+			if !child.IsDirectory {
+				// Check if the child is in the root
+				if !child.Matches(root) {
+					hasAllChildren = false
+					break
+				}
+			} else {
+				// Check if the child is in the root
+				if !child.Matches(filepath.Join(root, child.Name)) {
+					hasAllChildren = false
+					break
+				}
+			}
+		}
+
+		return hasAllChildren
+	}
+
+	return false
+
 }
 
 func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
@@ -487,11 +502,11 @@ func GoUp(path string, n uint8) string {
 }
 
 func isDirectory(path string) (bool, error) {
-	// Obtenir les informations sur le fichier
+	// Get the file info
 	info, err := os.Stat(path)
 	if err != nil {
-		return false, err // Retourne une erreur si le chemin est invalide
+		return false, err // If there is an error, return it
 	}
-	// Vérifie si c'est un dossier
+	// Check if it's a directory
 	return info.IsDir(), nil
 }
