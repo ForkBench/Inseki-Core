@@ -72,10 +72,56 @@ func Process(path string, config Config, insekiIgnore []string) (error, []Respon
 
 	// ----------------------------- Process the results -----------------------------
 
+	// map[root] = []Response
+	// Helps to delete duplicates and intricated structures
+	sorted := make(map[string][]Response)
+
+	for response := range ch {
+		// If the root is not in the map, create a new entry
+		if _, ok := sorted[response.Root]; !ok {
+			sorted[response.Root] = make([]Response, 0)
+		}
+
+		isDuplicate := false
+
+		// If it's a duplicate (same structure and root) or intricated structure, skip
+		for index, value := range sorted[response.Root] {
+
+			// If the structure is the same, skip
+			if value.Structure.Equal(response.Structure, true) {
+				isDuplicate = true
+				break
+			}
+
+			// If the structure current structure is contained in the stored structure, skip
+			if value.Structure.Contains(response.Structure) {
+				isDuplicate = true
+				break
+			}
+
+			// If the stored structure is contained in the current structure, remove the stored structure
+			if response.Structure.Contains(value.Structure) {
+				sorted[response.Root] = append(sorted[response.Root][:index], sorted[response.Root][index+1:]...)
+			}
+
+		}
+
+		if isDuplicate {
+			continue
+		}
+
+		// Append the response to the root
+		sorted[response.Root] = append(sorted[response.Root], response)
+	}
+
+	// ----------------------------- Return the results -----------------------------
+
 	results := make([]Response, 0)
 
-	for value := range ch {
-		results = append(results, value)
+	for _, value := range sorted {
+		for _, response := range value {
+			results = append(results, response)
+		}
 	}
 
 	return nil, results
