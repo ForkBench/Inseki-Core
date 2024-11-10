@@ -416,7 +416,8 @@ func (s Structure) GetDepths(filename string) []uint8 {
 }
 
 // Matches : Check if a Structure matches a file
-func (s Structure) Matches(path string) bool {
+// Returns the root of the structure
+func (s Structure) Matches(path string) (bool, string) {
 	/*
 		The idea is the following :
 
@@ -460,11 +461,11 @@ func (s Structure) Matches(path string) bool {
 		root := GoUp(path, depth)
 
 		if s.Root.Matches(root) {
-			return true
+			return true, root
 		}
 	}
 
-	return false
+	return false, ""
 }
 
 /*

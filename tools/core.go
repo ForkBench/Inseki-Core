@@ -53,10 +53,12 @@ func Process(path string, config Config, insekiIgnore []string) (error, []Respon
 
 			// For each structure, check if the file is a match
 			for _, structure := range value.Association.Structures {
-				if structure.Matches(value.Filepath) {
+				matched, root := structure.Matches(value.Filepath)
+				if matched {
 					ch <- Response{
 						Filepath:  value.Filepath,
 						Structure: structure,
+						Root:      root,
 					}
 				}
 			}

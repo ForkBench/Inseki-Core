@@ -18,11 +18,12 @@ type Target struct {
 
 type Response struct {
 	Filepath  string
+	Root      string
 	Structure Structure
 }
 
 func (r Response) String() string {
-	return fmt.Sprintf("Filepath: %s, Structure: %s", r.Filepath, r.Structure.Name)
+	return fmt.Sprintf("Filepath: %s, Structure: %s, Root: %s", r.Filepath, r.Structure.Name, r.Root)
 }
 
 func (t Target) String() string {
