@@ -1,3 +1,5 @@
 inseki-core
 .idea
 tests
+
+runner.go

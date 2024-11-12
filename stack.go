@@ -1,4 +1,4 @@
-package tools
+package main
 
 type Stack struct {
 	Values []Target
