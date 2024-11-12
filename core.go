@@ -6,32 +6,11 @@ import (
 	"sync"
 )
 
-// Process : Run a complete disk analysis
-func Process(path string, config Config, insekiIgnore []string) (error, []Response) {
-
-	// ----------------------------- Read the structures -----------------------------
-	numberStructuresAnalysed := 0
-
-	err, structures := ImportStructure(config, insekiIgnore, &numberStructuresAnalysed)
-	if err != nil {
-		return err, nil
-	}
-
-	if len(structures) == 0 {
-		return fmt.Errorf("no structure found"), nil
-	}
-
-	patterns := ExtractNames(structures, false)
-	associations := StringNodeToAssociation(patterns)
-
-	stack := &Stack{}
-
-	log.Printf("Number of structures analysed: %d\n", numberStructuresAnalysed)
-
+func analyze(path string, associations []Association, stack *Stack, insekiIgnore []string) (error, []Response) {
 	// ----------------------------- Explore the folder -----------------------------
 	numberFilesAnalysed := 0
 
-	err = ExploreFolder(path,
+	err := ExploreFolder(path,
 		insekiIgnore,
 		FilterWithPatternMap(&associations, stack),
 		&numberFilesAnalysed)
@@ -70,8 +49,10 @@ func Process(path string, config Config, insekiIgnore []string) (error, []Respon
 		close(ch)
 	}()
 
-	// ----------------------------- Process the results -----------------------------
+	return nil, processResult(ch)
+}
 
+func processResult(ch chan Response) []Response {
 	// map[root] = []Response
 	// Helps to delete duplicates and intricated structures
 	sorted := make(map[string][]Response)
@@ -124,5 +105,36 @@ func Process(path string, config Config, insekiIgnore []string) (error, []Respon
 		}
 	}
 
-	return nil, results
+	return results
+}
+
+// Process : Run a complete disk analysis
+func Process(path string, config Config, insekiIgnore []string) (error, []Response) {
+
+	// ----------------------------- Read the structures -----------------------------
+	numberStructuresAnalysed := 0
+
+	err, structures := ImportStructure(config, insekiIgnore, &numberStructuresAnalysed)
+	if err != nil {
+		return err, nil
+	}
+
+	if len(structures) == 0 {
+		return fmt.Errorf("no structure found"), nil
+	}
+
+	patterns := ExtractNames(structures, false)
+	associations := StringNodeToAssociation(patterns)
+
+	stack := &Stack{}
+
+	log.Printf("Number of structures analysed: %d\n", numberStructuresAnalysed)
+
+	// ----------------------------- Analyze the folder -----------------------------
+
+	err, val := analyze(path, associations, stack, insekiIgnore)
+
+	// ----------------------------- Process the results -----------------------------
+
+	return nil, val
 }
