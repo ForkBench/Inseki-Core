@@ -1,4 +1,4 @@
-package main
+package inseki
 
 type Stack struct {
 	Values []Target

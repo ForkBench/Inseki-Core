@@ -1,4 +1,4 @@
-package main
+package inseki
 
 import (
 	"encoding/json"
