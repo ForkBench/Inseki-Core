@@ -3,3 +3,5 @@ inseki-core
 tests
 
 runner.go
+
+config_test.json
