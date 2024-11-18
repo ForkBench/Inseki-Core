@@ -54,3 +54,12 @@ func CheckIfConfigFolderExists(config Config) error {
 
 	return nil
 }
+
+func translateDir(dir string) string {
+	// Replace the ~ with the home directory
+	if dir[:1] == "~" {
+		dir = os.Getenv("HOME") + dir[1:]
+	}
+
+	return dir
+}
