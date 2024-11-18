@@ -3,7 +3,6 @@ package main
 import (
 	_ "embed"
 	"fmt"
-	"time"
 )
 
 func cmpInt(a int, b int) int8 {
@@ -17,8 +16,19 @@ func cmpInt(a int, b int) int8 {
 
 func main() {
 
-	s := Structure{
-		Children: []Node{
+	s1 := &Structure{
+		Children: []*Node{
+			{
+				Name:  "*",
+				IsDir: true,
+				Depth: 1,
+			},
+		},
+		RootPath: "/",
+	}
+
+	s2 := &Structure{
+		Children: []*Node{
 			{
 				Name:  "Test",
 				IsDir: true,
@@ -28,16 +38,13 @@ func main() {
 		RootPath: "/",
 	}
 
-	start := time.Now()
-	fmt.Printf("Hash : %08x\n", s.Hash())
-	elapsed := time.Since(start)
-	snapshot := time.Now()
-	fmt.Printf("First hash : %d\n", elapsed)
-
-	// The next one are quicker (around 6 times by memorizing the hash)
-	fmt.Printf("Hash : %08x\n", s.Hash())
-	fmt.Printf("Hash : %08x\n", s.Hash())
-	elapsed = time.Since(snapshot)
-	fmt.Printf("Last hash : %d\n", elapsed)
+	fmt.Printf("%0x\n", s1.Hash())
+	fmt.Printf("%0x\n", s2.Hash())
+	println(s1.Contains(s2))
+	println(s2.Contains(s1))
+	println(s1.Contains(s1))
+	println(s2.Contains(s2))
+	println(structureEquals(s1, s2))
+	println(structureEquals(s2, s1))
 
 }
