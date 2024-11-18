@@ -2,8 +2,8 @@ package main
 
 import (
 	_ "embed"
-	inseki "github.com/ForkBench/Inseki-Core"
-	"math/rand/v2"
+	"fmt"
+	"time"
 )
 
 func cmpInt(a int, b int) int8 {
@@ -17,16 +17,27 @@ func cmpInt(a int, b int) int8 {
 
 func main() {
 
-	set := inseki.NewSet[int]()
-
-	for i := 0; i < 10; i++ {
-		// Random number
-		set.Add(rand.Int()%100, cmpInt)
+	s := Structure{
+		Children: []Node{
+			{
+				Name:  "Test",
+				IsDir: true,
+				Depth: 1,
+			},
+		},
+		RootPath: "/",
 	}
 
-	for !set.IsEmpty() {
-		element, _ := set.Get()
-		println(element)
-	}
+	start := time.Now()
+	fmt.Printf("Hash : %08x\n", s.Hash())
+	elapsed := time.Since(start)
+	snapshot := time.Now()
+	fmt.Printf("First hash : %d\n", elapsed)
+
+	// The next one are quicker (around 6 times by memorizing the hash)
+	fmt.Printf("Hash : %08x\n", s.Hash())
+	fmt.Printf("Hash : %08x\n", s.Hash())
+	elapsed = time.Since(snapshot)
+	fmt.Printf("Last hash : %d\n", elapsed)
 
 }
