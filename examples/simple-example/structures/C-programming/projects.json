@@ -1,26 +1,24 @@
 {
-    "name": "*",
+    "pattern": "*",
     "isDirectory": true,
     "children": [
         {
-            "name": "src",
+            "pattern": "src",
             "isDirectory": true,
             "children": [
                 {
-                    "name": "*.c",
-                    "isDirectory": false,
-                    "optional": false
+                    "pattern": "*.c",
+                    "isDirectory": false
                 }
             ]
         },
         {
-            "name": "lib",
+            "pattern": "lib",
             "isDirectory": true,
             "children": [
                 {
-                    "name": "*.h",
-                    "isDirectory": false,
-                    "optional": false
+                    "pattern": "*.h",
+                    "isDirectory": false
                 }
             ]
         }

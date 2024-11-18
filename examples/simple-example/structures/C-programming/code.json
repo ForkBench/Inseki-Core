@@ -1,0 +1,18 @@
+{
+    "pattern": "*",
+    "isDirectory": true,
+    "children": [
+        {
+            "pattern": "main.c",
+            "isDirectory": false
+        },
+        {
+            "pattern": "*.h",
+            "isDirectory": false
+        },
+        {
+            "pattern": "*.c",
+            "isDirectory": false
+        }
+    ]
+}
