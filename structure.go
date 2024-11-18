@@ -21,7 +21,30 @@ type Node struct {
 	Pattern  string  `json:"pattern,omitempty"`
 }
 
-func ReadJSON(jsonPath string) (error, Structure) {
+func ImportStructures(structuresPath string) []Structure {
+	structures := make([]Structure, 0)
+
+	// Read recursively for jsons, and import them
+	err := filepath.Walk(structuresPath, func(path string, info os.FileInfo, err error) error {
+		if filepath.Ext(path) == ".json" {
+			err, structure := readJSON(path)
+			if err != nil {
+				panic(err)
+			}
+
+			structures = append(structures, structure)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil
+	}
+
+	return structures
+}
+
+func readJSON(jsonPath string) (error, Structure) {
 	jsonData, err := os.ReadFile(jsonPath)
 	if err != nil {
 		return err, Structure{}
