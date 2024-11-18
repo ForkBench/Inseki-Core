@@ -3,37 +3,30 @@ package main
 import (
 	_ "embed"
 	inseki "github.com/ForkBench/Inseki-Core"
+	"math/rand/v2"
 )
 
-//go:embed config.json
-var configJson string
+func cmpInt(a int, b int) int8 {
+	if a > b {
+		return 1
+	} else if a < b {
+		return -1
+	}
+	return 0
+}
 
 func main() {
 
-	// ----------------------------- Read the configuration -----------------------------
-	err, config := inseki.ReadEmbedConfigFile(configJson)
-	if err != nil {
-		panic(err)
+	set := inseki.NewSet[int]()
+
+	for i := 0; i < 10; i++ {
+		// Random number
+		set.Add(rand.Int()%100, cmpInt)
 	}
 
-	// Check if the folder exists
-	err = inseki.CheckIfConfigFolderExists(config)
-	if err != nil {
-		panic(err)
+	for !set.IsEmpty() {
+		element, _ := set.Get()
+		println(element)
 	}
 
-	err, insekiIgnore := inseki.ReadInsekiIgnore(config)
-	if err != nil {
-		panic(err)
-	}
-
-	err, val := inseki.Process("~/Documents", config, insekiIgnore)
-	if err != nil {
-		return
-	}
-
-	// Print the results
-	for _, response := range val {
-		println(response.String())
-	}
 }
