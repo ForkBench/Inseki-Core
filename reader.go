@@ -38,8 +38,8 @@ func ReadInsekiIgnore(config Config) (error, []string) {
 	return nil, result
 }
 
-// TranslateDir Translate a dir name to an absolute path (if there is ~)
-func TranslateDir(path string) string {
+// translateDir Translate a dir name to an absolute path (if there is ~)
+func translateDir(path string) string {
 	usr, _ := user.Current()
 	dir := usr.HomeDir
 
@@ -59,7 +59,7 @@ func TranslateDir(path string) string {
 func ExploreFolder(path string, insekiIgnore []string, callback func(path string, info os.FileInfo) error, numberFilesAnalysed *int) error {
 
 	// Translate the path
-	path = TranslateDir(path)
+	path = translateDir(path)
 
 	return filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 		if err != nil {

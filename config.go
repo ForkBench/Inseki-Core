@@ -19,8 +19,8 @@ func ReadEmbedConfigFile(configJson string) (error, Config) {
 	}
 
 	// TODO: Refactor
-	config.InsekiPath = TranslateDir(config.InsekiPath)
-	config.StructurePath = TranslateDir(config.StructurePath)
+	config.InsekiPath = translateDir(config.InsekiPath)
+	config.StructurePath = translateDir(config.StructurePath)
 
 	return nil, config
 }

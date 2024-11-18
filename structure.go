@@ -69,7 +69,7 @@ func JSONToStructure(jsonPath string) (error, Structure) {
 
 	rootNode.HashValue = rootNode.Hash()
 
-	structure := rootNode.NodeToStructure()
+	structure := rootNode.nodeToStructure()
 	structure.Name = filepath.Base(jsonPath)
 
 	return nil, structure
@@ -81,7 +81,7 @@ ImportStructure method to import all structures from a folder
 func ImportStructure(config Config, insekiIgnore []string, numberFilesAnalysed *int) (error, map[uint64]Structure) {
 	nodes := make(map[uint64]Structure)
 
-	path := TranslateDir(config.StructurePath)
+	path := translateDir(config.StructurePath)
 
 	// Read all .json
 	err := ExploreFolder(path, insekiIgnore, func(path string, info os.FileInfo) error {
@@ -141,13 +141,13 @@ func SortNodes(structures *[]Structure) {
 }
 
 /*
-ExtractNames
+extractNames
 Extract all the names from a list of nodes
 */
-func ExtractNames(nodes map[uint64]Structure, extractOptional bool) map[string][]Structure {
+func extractNames(nodes map[uint64]Structure, extractOptional bool) map[string][]Structure {
 	names := make(map[string][]Structure)
 	for _, structure := range nodes {
-		structure.ExtractNames(extractOptional, names)
+		structure.extractNames(extractOptional, names)
 	}
 
 	// For each name, sort the nodes
@@ -162,9 +162,9 @@ func ExtractNames(nodes map[uint64]Structure, extractOptional bool) map[string][
 // ----------------------------- Node -----------------------------
 
 /*
-NodeToStructure method to convert a Node to a list of files, canBeOptional is used to include optional files
+nodeToStructure method to convert a Node to a list of files, canBeOptional is used to include optional files
 */
-func (n Node) NodeToStructure() Structure {
+func (n Node) nodeToStructure() Structure {
 	return Structure{
 		Root: n,
 		Hash: n.Hash(),
@@ -173,13 +173,13 @@ func (n Node) NodeToStructure() Structure {
 }
 
 /*
-NodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
+nodeToString method to convert a Node to a list of files, canBeOptional is used to include optional files
 */
-func (n Node) NodeToString(canBeOptional bool) []string {
+func (n Node) nodeToString(canBeOptional bool) []string {
 	var files []string
 	for _, child := range n.Children {
 		if child.IsDirectory {
-			for _, file := range child.NodeToString(canBeOptional) {
+			for _, file := range child.nodeToString(canBeOptional) {
 				if !child.Optional || canBeOptional {
 					files = append(files, fmt.Sprintf("%s/%s", n.Name, file))
 				}
@@ -242,8 +242,8 @@ func (n Node) Contains(other Node) bool {
 
 }
 
-// Matches : Check if a Structure matches a file with a specific depth
-func (n Node) Matches(root string) bool {
+// matches : Check if a Structure matches a file with a specific depth
+func (n Node) matches(root string) bool {
 	// Has to match from the root
 
 	// If the current node is a file
@@ -267,13 +267,13 @@ func (n Node) Matches(root string) bool {
 
 			if !child.IsDirectory {
 				// Check if the child is in the root
-				if !child.Matches(root) {
+				if !child.matches(root) {
 					hasAllChildren = false
 					break
 				}
 			} else {
 				// Check if the child is in the root
-				if !child.Matches(filepath.Join(root, child.Name)) {
+				if !child.matches(filepath.Join(root, child.Name)) {
 					hasAllChildren = false
 					break
 				}
@@ -287,7 +287,7 @@ func (n Node) Matches(root string) bool {
 
 }
 
-func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
+func (n Node) getDepths(filename string, depths *[]uint8, depth int) {
 
 	base := filepath.Base(filename)
 
@@ -299,7 +299,7 @@ func (n Node) GetDepths(filename string, depths *[]uint8, depth int) {
 		}
 
 		if child.IsDirectory {
-			child.GetDepths(filename, depths, depth+1)
+			child.getDepths(filename, depths, depth+1)
 		}
 	}
 }
@@ -326,10 +326,10 @@ func (n Node) Hash(depth ...int) uint64 {
 // ----------------------------- Structure -----------------------------
 
 /*
-ExtractNames
+extractNames
 For a node, if its root isn't "*", then add it to the map and return
 */
-func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structure) {
+func (s Structure) extractNames(extractOptional bool, names map[string][]Structure) {
 	addToNames := func(name string, s Structure) {
 		if _, ok := names[name]; !ok {
 			names[name] = []Structure{s}
@@ -348,16 +348,16 @@ func (s Structure) ExtractNames(extractOptional bool, names map[string][]Structu
 }
 
 /*
-StructureToString method to convert a Structure to a list of files, canBeOptional is used to include optional files
+structureToString method to convert a Structure to a list of files, canBeOptional is used to include optional files
 */
-func (s Structure) StructureToString(canBeOptional bool) []string {
-	return s.Root.NodeToString(canBeOptional)
+func (s Structure) structureToString(canBeOptional bool) []string {
+	return s.Root.nodeToString(canBeOptional)
 }
 
 /*
-StringToStructure method to convert a list of files to a Structure
+stringToStructure method to convert a list of files to a Structure
 */
-func StringToStructure(files []string) Structure {
+func stringToStructure(files []string) Structure {
 	rootNode := Node{
 		Name:        ".",
 		IsDirectory: true,
@@ -395,14 +395,14 @@ func StringToStructure(files []string) Structure {
 		}
 	}
 
-	return rootNode.NodeToStructure()
+	return rootNode.nodeToStructure()
 }
 
 /*
-StringNodeToAssociation
+stringNodeToAssociation
 String-Node map to Association
 */
-func StringNodeToAssociation(stringNode map[string][]Structure) []Association {
+func stringNodeToAssociation(stringNode map[string][]Structure) []Association {
 	var associations []Association
 	for pattern, nodes := range stringNode {
 		associations = append(associations, Association{
@@ -422,17 +422,17 @@ func (s Structure) Contains(other Structure) bool {
 	return s.Root.Contains(other.Root)
 }
 
-func (s Structure) GetDepths(filename string) []uint8 {
+func (s Structure) getDepths(filename string) []uint8 {
 	depths := make([]uint8, 0)
 
-	s.Root.GetDepths(filename, &depths, 1)
+	s.Root.getDepths(filename, &depths, 1)
 
 	return depths
 }
 
-// Matches : Check if a Structure matches a file
+// matches : Check if a Structure matches a file
 // Returns the root of the structure
-func (s Structure) Matches(path string) (bool, string) {
+func (s Structure) matches(path string) (bool, string) {
 	/*
 		The idea is the following :
 
@@ -470,12 +470,12 @@ func (s Structure) Matches(path string) (bool, string) {
 	path = filepath.Clean(path)
 
 	// Get the depth of the file
-	depths := s.GetDepths(filepath.Base(path))
+	depths := s.getDepths(filepath.Base(path))
 
 	for _, depth := range depths {
-		root := GoUp(path, depth)
+		root := goUp(path, depth)
 
-		if s.Root.Matches(root) {
+		if s.Root.matches(root) {
 			return true, root
 		}
 	}
@@ -493,8 +493,8 @@ func (s Structure) Equal(other Structure, canBeOptional bool) bool {
 
 // ----------------------------- Useful -----------------------------
 
-// GoUp : Go up in the path
-func GoUp(path string, n uint8) string {
+// goUp : Go up in the path
+func goUp(path string, n uint8) string {
 	for i := 0; i < int(n); i++ {
 		path = filepath.Dir(path)
 	}

@@ -32,7 +32,7 @@ func analyze(path string, associations []Association, stack *Stack, insekiIgnore
 
 			// For each structure, check if the file is a match
 			for _, structure := range value.Association.Structures {
-				matched, root := structure.Matches(value.Filepath)
+				matched, root := structure.matches(value.Filepath)
 				if matched {
 					ch <- Response{
 						Filepath:  value.Filepath,
@@ -123,8 +123,8 @@ func Process(path string, config Config, insekiIgnore []string) (error, []Respon
 		return fmt.Errorf("no structure found"), nil
 	}
 
-	patterns := ExtractNames(structures, false)
-	associations := StringNodeToAssociation(patterns)
+	patterns := extractNames(structures, false)
+	associations := stringNodeToAssociation(patterns)
 
 	stack := &Stack{}
 
